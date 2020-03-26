@@ -23,7 +23,7 @@ def create_sample(line, directory):
       else:
          raise NotSampleError() #if the line isn't a sample we are going to use either because it is wgs or already in bam format or in the wrong format, don't make an object
 
-def write_pbs_file(output_dir, sample, genome, username): #TODO add timing commands to this
+def write_pbs_file(output_dir, sample, genome, username, current_dir): #TODO add timing commands to this
    file = open(output_dir + '/' + sample.name + '_pipeline.pbs')
 
    #default .pbs job header
@@ -67,15 +67,31 @@ def write_pbs_file(output_dir, sample, genome, username): #TODO add timing comma
    #mpileups
    file.write('samtools mpileup -f ' + genome + ' -q 5 -Q 0 -d 50000 -B -o ' + output_dir + '/' + sample.name + '_tumor.vcf ' + output_dir + '/' + sample.name + '_tumor_md.bam')
    file.write('samtools mpileup -f ' + genome + ' -q 5 -Q 0 -d 50000 -B -o ' + output_dir + '/' + sample.name + '_normal.vcf ' + output_dir + '/' + sample.name + '_normal_md.bam')
+   file.write('')
 
    #generate large segments for amplification and deletion calling
+   file.write('varscan copynumber ' + output_dir + '/' + sample.name + '_normal.vcf ' + output_dir + '/' + sample.name + '_tumor.vcf ' + output_dir + '/' + sample.name + '_varscan --min-base-qual 0 --min-map-qual 0 --min-segment-size 50 --max-segment-size 1000')
+   file.write('varscan copyCaller ' + output_dir + '/' + sample.name + '_varscan.copynumber --output-file ' + output_dir + '/' + sample.name + '_varscan.copynumber.called')
+   file.write('Rscript --vanilla ' + current_dir + '/DNAcopy.R ' + output_dir + '/' + sample.name + '_varscan.copynumber.called')
+   file.write('')
    
+   #generate short segments for plotting so we don't have to plot every single point
+   file.write('varscan copynumber ' + output_dir + '/' + sample.name + '_normal.vcf ' + output_dir + '/' + sample.name + '_tumor.vcf ' + output_dir + '/' + sample.name + '_varscan_plotting --min-base-qual 0 --min-map-qual 0 --min-segment-size 5 --max-segment-size 50')
+   file.write('varscan copyCaller ' + output_dir + '/' + sample.name + '_varscan_plotting.copynumber --output-file ' + output_dir + '/' + sample.name + '_varscan_plotting.copynumber.called')
+   file.write('Rscript --vanilla ' + current_dir + '/DNAcopy.R ' + output_dir + '/' + sample.name + '_varscan_plotting.copynumber.called')
+   file.write('')
+
+   #generate a plot of the sample highlighting regions of amplification and deletion
+   #TODO write this python file to make a plot using numpy similar to how we've made plots in matlab
+   file.write('python sample_visualization.py ' + output_dir + '/' + sample.name + '_varscan.copynumber.called.segmentation ' + output_dir + '/' + sample.name + '_varscan_plotting.copynumber.called.segmentation')
+   file.write('')
 
    file.close()
 
 
 def main(argv):
    username = os.environ.get('USER')
+   current_dir = os.getcwd()
 
    #process inputs
    inputfile = ''
@@ -136,7 +152,7 @@ def main(argv):
       sample_dir = outputfile + '/' + sample.name
       call(['mkdir', '-p', sample_dir])
       call(['mkdir', '-p', sample_dir + '/source'])
-      write_pbs_file(sample_dir, sample, genome, username) #assuming for now that email is of format username@ucsd.edu
+      write_pbs_file(sample_dir, sample, genome, username, current_dir) #assuming for now that email is of format username@ucsd.edu
 
 
 if __name__ == "__main__":
