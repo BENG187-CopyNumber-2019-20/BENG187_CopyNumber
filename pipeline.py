@@ -24,7 +24,7 @@ def create_sample(line, directory):
          return None #if the line isn't a sample we are going to use either because it is wgs or already in bam format or in the wrong format, don't make an object
 
 def write_pbs_file(output_dir, sample, genome, username, current_dir): #TODO add timing commands to this
-   file = open(output_dir + '/' + sample.name + '_pipeline.pbs', 'w')
+   file = open(output_dir + '/' + sample.name + '_pipeline.pbs', 'w') #TODO make all the outputs not go to /source
 
    #default .pbs job header
    file.write('#!/bin/bash\n')
@@ -32,8 +32,8 @@ def write_pbs_file(output_dir, sample, genome, username, current_dir): #TODO add
    file.write('#PBS -l nodes=1:ppn=8\n')
    file.write('#PBS -l walltime=20:00:00\n')
    file.write('#PBS -m bea\n')
-   file.write('#PBS -M ' + username + '@ucsd.edu\n')  #assuming for now that email is of format username@ucsd.edu
-   file.write('#PBS -o ' + sample.name + '_pipeline.o\n')
+   file.write('#PBS -M ' + username + '@ucsd.edu\n') #assuming for now that email is of format username@ucsd.edu
+   file.write('#PBS -o ' + sample.name + '_pipeline.o\n') #TODO output and error files save to the github file not the source file
    file.write('#PBS -e ' + sample.name + '_pipeline.e\n')
    file.write('#PBS -N ' + sample.name + '_pipeline_' + username + '\n')
    file.write('#PBS -V\n')
@@ -98,7 +98,7 @@ def main(argv):
    outputfile = ''
    genome = ''
    try:
-      opts, args = getopt.getopt(argv,'hi:o:g:',['help','input=','output=','genome='])
+      opts, args = getopt.getopt(argv,'hi:o:g:',['help','input=','output=','genome=']) #TODO add email option default no emails
    except getopt.GetoptError:
       print('pipeline.py -i <inputfile> -o <outputfile> -g <referencegenome>')
       sys.exit(2)
