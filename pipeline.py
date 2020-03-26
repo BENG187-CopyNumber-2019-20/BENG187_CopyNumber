@@ -21,7 +21,7 @@ def create_sample(line, directory):
          sample = Sample(l[0], l[1], l[2], directory)
          return sample
       else:
-         raise NotSampleError() #if the line isn't a sample we are going to use either because it is wgs or already in bam format or in the wrong format, don't make an object
+         return None #if the line isn't a sample we are going to use either because it is wgs or already in bam format or in the wrong format, don't make an object
 
 def write_pbs_file(output_dir, sample, genome, username, current_dir): #TODO add timing commands to this
    file = open(output_dir + '/' + sample.name + '_pipeline.pbs')
@@ -129,7 +129,7 @@ def main(argv):
    if outputfile == '':
       outputfile = '/oasis/tscc/scratch/' + username + '/' + inputfolder.rsplit('/', 1)[1] #the name of the samples folder is used as the defaul for the name of the output folder
       print('No output file provided, will output to ' + outputfile)
-   if genome == ''
+   if genome == '':
       print('No reference genome provided')
       sys.exit(2)
    elif genome.rsplit('.', 1)[1] != 'fa':
@@ -143,10 +143,9 @@ def main(argv):
    sample_list = []
    with open(inputfile) as f:
       for line in f:
-         try:
-            sample_list += create_sample(line.rstrip('\n'), inputfolder + '/fastq_files')
-         except NotSampleError:
-            continue
+        sample = create_sample(line.rstrip('\n'), inputfolder + '/fastq_files')
+        if sample is not None:
+        	sample_list += [sample]
 
    for sample in sample_list:
       sample_dir = outputfile + '/' + sample.name
