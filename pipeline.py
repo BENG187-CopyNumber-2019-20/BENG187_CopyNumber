@@ -83,8 +83,8 @@ def write_pbs_file(output_dir, sample, genome, username, current_dir): #TODO add
 
    #generate a plot of the sample highlighting regions of amplification and deletion
    #TODO write this python file to make a plot using numpy similar to how we've made plots in matlab
-   file.write('python sample_visualization.py ' + output_dir + '/' + sample.name + '_varscan.copynumber.called.segmentation ' + output_dir + '/' + sample.name + '_varscan_plotting.copynumber.called.segmentation')
-   file.write('')
+   #file.write('python sample_visualization.py ' + output_dir + '/' + sample.name + '_varscan.copynumber.called.segmentation ' + output_dir + '/' + sample.name + '_varscan_plotting.copynumber.called.segmentation')
+   #file.write('')
 
    file.close()
 
@@ -152,7 +152,9 @@ def main(argv):
       sample_dir = outputfile + '/' + sample.name
       call(['mkdir', '-p', sample_dir])
       call(['mkdir', '-p', sample_dir + '/source'])
-      write_pbs_file(sample_dir, sample, genome, username, current_dir) #assuming for now that email is of format username@ucsd.edu
+      write_pbs_file(sample_dir + '/source', sample, genome, username, current_dir) #assuming for now that email is of format username@ucsd.edu
+      #call(['qsub', sample_dir + '/source/' + sample.name + '_pipeline.pbs'])
+
 
 
 if __name__ == "__main__":
